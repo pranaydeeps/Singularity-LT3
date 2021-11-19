@@ -1,0 +1,41 @@
+Bootstrap: docker
+From: huggingface/transformers-pytorch-gpu:latest
+
+%setup
+
+%files
+
+%environment
+    export LISTEN_PORT=12345
+    export LC_ALL=C.utf-8
+    export LANG=C.utf-8
+
+%post
+    apt-get update && apt-get install -y htop
+    pip install -U spacy[cuda102,transformers,lookups]
+    pip install -U stanza onmt pandas wandb
+    NOW=`date`
+    echo "export NOW=\"${NOW}\"" >> $SINGULARITY_ENVIRONMENT
+
+%runscript
+    echo "Container was created $NOW"
+    echo "Arguments received: $*"
+    exec echo "$@"
+
+%startscript
+    nc -lp $LISTEN_PORT
+
+%test
+    grep -q NAME=\"Ubuntu\" /etc/os-release
+    if [ $? -eq 0 ]; then
+        echo "Container base is Ubuntu as expected."
+    else
+        echo "Container base is not Ubuntu."
+    fi
+
+%labels
+    Author pranaydeep.singh@ugent.be
+    Version v0.0.1
+
+%help
+    Base container for LT3 experiments on the HPC
